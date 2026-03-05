@@ -8,16 +8,13 @@ This repository is organized as **three independent projects**:
 - `backend/` - Node.js (TypeScript + Express) API
 - `contracts/` - Soroban (Rust) smart contracts
 
-## Prerequisites
+## Quickstart (Pick One)
 
-- Node.js 20+ (recommended)
-- pnpm (optional) or npm
-- Rust toolchain (stable)
-- Soroban CLI (`stellar` CLI with Soroban support)
+New contributors can run **just one** component without setting up the others.
 
-## Quickstart
+### Option A: Frontend Only
 
-### 1) Frontend
+**Prerequisites:** Node.js 20+
 
 ```bash
 cd frontend
@@ -25,9 +22,13 @@ npm install
 npm run dev
 ```
 
-The frontend runs on `http://localhost:3000`.
+- Runs on: `http://localhost:3000`
+- Uses mock data (no backend required)
+- See [`frontend/README.md`](frontend/README.md) for details
 
-### 2) Backend
+### Option B: Backend Only
+
+**Prerequisites:** Node.js 20+
 
 ```bash
 cd backend
@@ -36,24 +37,80 @@ cp .env.example .env
 npm run dev
 ```
 
-The backend runs on `http://localhost:4000`.
+- Runs on: `http://localhost:4000`
+- Verify: `GET http://localhost:4000/health`
+- See [`backend/README.md`](backend/README.md) for API documentation
 
-- `GET /health`
-- `GET /soroban/config`
+### Option C: Contracts Only
 
-### 3) Contracts (Soroban)
+**Prerequisites:** Rust (stable), Soroban CLI (`stellar`)
 
 ```bash
 cd contracts
+
+# Run tests
 cargo test
+
+# Build contract WASM
 stellar contract build
 ```
 
-For local/testnet deployment instructions see `contracts/README.md`.
+- See [`contracts/README.md`](contracts/README.md) for deployment instructions
+
+## Troubleshooting
+
+### Node version issues
+
+```bash
+node --version  # Should be 20+
+```
+
+If you have an older version, upgrade via [nodejs.org](https://nodejs.org/) or use a version manager like `nvm`.
+
+### Missing environment variables (backend)
+
+If the backend fails to start with errors about missing env vars:
+
+```bash
+cd backend
+cp .env.example .env  # Creates a working .env with defaults
+```
+
+The defaults in `.env.example` are sufficient for local development.
+
+### Port already in use
+
+- **Frontend (3000):** If port 3000 is busy, Next.js will prompt to use another port
+- **Backend (4000):** Set a different port in `backend/.env`:
+  ```
+  PORT=4001
+  ```
+
+### npm install failures
+
+- Clear npm cache: `npm cache clean --force`
+- Delete `node_modules` and `package-lock.json`, then retry
+- Ensure you're in the correct project directory (`frontend/` or `backend/`)
+
+### Soroban CLI not found
+
+```bash
+stellar --version
+```
+
+If missing, install the [Stellar CLI](https://github.com/stellar/stellar-cli) with Soroban support.
+
+### cargo test fails (contracts)
+
+Ensure you have the WASM target installed:
+
+```bash
+rustup target add wasm32-unknown-unknown
+```
 
 ## Contributing
 
-See `CONTRIBUTING.md` for:
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for:
 
 - Local setup for FE/BE/contracts
 - How to create issues and pick up tasks
@@ -62,6 +119,6 @@ See `CONTRIBUTING.md` for:
 
 Contributions are made via **Fork -> Branch -> Pull Request**.
 
-If you want a curated list of issues (including good first issues), see `docs/ISSUES_CATALOG.md`.
+If you want a curated list of issues (including good first issues), see [`docs/ISSUES_CATALOG.md`](docs/ISSUES_CATALOG.md).
 
-For monorepo navigation and where to put new code, see `docs/REPO_STRUCTURE.md`.
+For monorepo navigation and where to put new code, see [`docs/REPO_STRUCTURE.md`](docs/REPO_STRUCTURE.md).
