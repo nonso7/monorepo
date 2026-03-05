@@ -32,7 +32,7 @@ export interface NgnBalanceResponse {
   totalNgn: number;
 }
 
-export type WalletLedgerStatus = "pending" | "confirmed" | "failed";
+export type WalletLedgerStatus = "pending" | "approved" | "rejected" | "confirmed" | "failed";
 
 export interface WalletLedgerEntry {
   id: string;
@@ -46,6 +46,28 @@ export interface WalletLedgerEntry {
 export interface WalletLedgerResponse {
   entries: WalletLedgerEntry[];
   nextCursor?: string | null;
+}
+
+export interface BankAccountDetails {
+  accountNumber: string;
+  accountName: string;
+  bankName: string;
+}
+
+export interface WithdrawalRequest {
+  amountNgn: number;
+  bankAccount: BankAccountDetails;
+}
+
+export interface WithdrawalResponse {
+  id: string;
+  amountNgn: number;
+  status: "pending" | "approved" | "rejected" | "confirmed" | "failed";
+  bankAccount: BankAccountDetails;
+  reference: string;
+  createdAt: string;
+  processedAt?: string | null;
+  failureReason?: string | null;
 }
 
 export function getNgnBalance(): Promise<NgnBalanceResponse> {
@@ -71,4 +93,25 @@ export function initiateTopUp(payload: TopUpRequest): Promise<TopUpResponse> {
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+export function initiateWithdrawal(payload: WithdrawalRequest): Promise<WithdrawalResponse> {
+  return apiFetch<WithdrawalResponse>("/api/wallet/ngn/withdraw/initiate", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getWithdrawalHistory(params?: {
+  cursor?: string;
+  limit?: number;
+}): Promise<{ entries: WithdrawalResponse[]; nextCursor?: string | null }> {
+  const cursor = params?.cursor ?? "";
+  const limit = params?.limit ?? 20;
+
+  const qs = new URLSearchParams();
+  if (cursor) qs.set("cursor", cursor);
+  qs.set("limit", String(limit));
+
+  return apiFetch<{ entries: WithdrawalResponse[]; nextCursor?: string | null }>(`/api/wallet/ngn/withdraw/history?${qs.toString()}`);
 }

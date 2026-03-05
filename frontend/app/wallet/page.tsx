@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { AlertCircle, ArrowDownToLine, ArrowUpRight, Info, RefreshCw, Wallet } from "lucide-react";
+import { AlertCircle, ArrowDownToLine, ArrowUpRight, Info, RefreshCw, Wallet, ExternalLink } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +16,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { TopUpModal } from "@/components/wallet/TopUpModal";
+import { WithdrawalModal } from "@/components/wallet/WithdrawalModal";
+import { WithdrawalHistory } from "@/components/wallet/WithdrawalHistory";
 
 import {
   getNgnBalance,
@@ -54,6 +56,12 @@ function statusPresentation(status: WalletLedgerEntry["status"]) {
   if (status === "failed") {
     return { label: "Failed", variant: "destructive" as const };
   }
+  if (status === "approved") {
+    return { label: "Approved", variant: "default" as const };
+  }
+  if (status === "rejected") {
+    return { label: "Rejected", variant: "destructive" as const };
+  }
   return { label: "Pending", variant: "outline" as const };
 }
 
@@ -67,6 +75,7 @@ export default function WalletPage() {
     type: "loading",
   });
   const [topUpModalOpen, setTopUpModalOpen] = useState(false);
+  const [withdrawalModalOpen, setWithdrawalModalOpen] = useState(false);
 
   // Separate retry function that sets loading state (called from user interactions, not effects)
   const retry = useCallback(() => {
@@ -132,9 +141,7 @@ export default function WalletPage() {
             <Button
               variant="outline"
               className="w-full border-3 border-foreground bg-background font-bold shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(26,26,26,1)] sm:w-auto"
-              onClick={() => {
-                // CTA stub: backend flow to be implemented
-              }}
+              onClick={() => setWithdrawalModalOpen(true)}
             >
               <ArrowUpRight className="h-4 w-4" />
               Withdraw
@@ -367,7 +374,23 @@ export default function WalletPage() {
                           >
                             {amountText}
                           </p>
-                          <Badge variant={variant}>{label}</Badge>
+                          <div className="flex flex-col items-end gap-2">
+                            <Badge variant={variant}>{label}</Badge>
+                            {(entry.status === "failed" || entry.status === "rejected") && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                                onClick={() => {
+                                  // Open support contact - could be a mailto link or support page
+                                  window.location.href = "mailto:support@example.com?subject=Withdrawal Issue - " + (entry.reference || entry.id);
+                                }}
+                              >
+                                <ExternalLink className="mr-1 h-3 w-3" />
+                                Contact support
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );
@@ -377,6 +400,8 @@ export default function WalletPage() {
             </CardContent>
           </Card>
         </section>
+
+        <WithdrawalHistory className="mt-8" />
 
         {balanceState.type === "error" && (
           <div className="mt-6 rounded-md border-2 border-foreground bg-muted p-4 text-sm">
@@ -392,6 +417,15 @@ export default function WalletPage() {
           // Refresh wallet data after successful top-up initiation
           retry();
         }}
+      />
+      <WithdrawalModal
+        open={withdrawalModalOpen}
+        onOpenChange={setWithdrawalModalOpen}
+        onSuccess={() => {
+          // Refresh wallet data after successful withdrawal initiation
+          retry();
+        }}
+        availableBalance={balanceState.type === "success" ? balanceState.data.availableNgn : 0}
       />
     </main>
   );
