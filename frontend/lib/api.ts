@@ -1,5 +1,67 @@
 const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
+export const ACCOUNT_FROZEN_MESSAGE =
+  "Account frozen due to negative balance. Please top up to continue.";
+
+export class ApiError extends Error {
+  code?: string;
+  status: number;
+  details?: Record<string, unknown>;
+
+  constructor(params: {
+    message: string;
+    status: number;
+    code?: string;
+    details?: Record<string, unknown>;
+  }) {
+    super(params.message);
+    this.name = "ApiError";
+    this.status = params.status;
+    this.code = params.code;
+    this.details = params.details;
+  }
+}
+
+export function isAccountFrozenError(error: unknown): boolean {
+  return error instanceof ApiError && error.code === "ACCOUNT_FROZEN";
+}
+
+function parseErrorPayload(payload: unknown): {
+  message: string;
+  code?: string;
+  details?: Record<string, unknown>;
+} {
+  if (!payload || typeof payload !== "object") {
+    return { message: "" };
+  }
+
+  const maybeError = (payload as { error?: unknown }).error;
+  if (!maybeError || typeof maybeError !== "object") {
+    return { message: "" };
+  }
+
+  const typedError = maybeError as {
+    code?: unknown;
+    message?: unknown;
+    details?: unknown;
+  };
+
+  const code = typeof typedError.code === "string" ? typedError.code : undefined;
+  const baseMessage =
+    code === "ACCOUNT_FROZEN"
+      ? ACCOUNT_FROZEN_MESSAGE
+      : typeof typedError.message === "string"
+        ? typedError.message
+        : "";
+
+  const details =
+    typedError.details && typeof typedError.details === "object"
+      ? (typedError.details as Record<string, unknown>)
+      : undefined;
+
+  return { message: baseMessage, code, details };
+}
+
 export async function apiFetch<T>(
   path: string,
   options?: RequestInit
@@ -28,8 +90,25 @@ export async function apiFetch<T>(
     });
 
     if (!res.ok) {
-      const message = await res.text();
-      throw new Error(message || `API error: ${res.status}`);
+      const text = await res.text();
+      let payload: unknown = null;
+      if (text) {
+        try {
+          payload = JSON.parse(text);
+        } catch {
+          payload = null;
+        }
+      }
+
+      const parsed = parseErrorPayload(payload);
+      const message = parsed.message || text || `API error: ${res.status}`;
+
+      throw new ApiError({
+        message,
+        status: res.status,
+        code: parsed.code,
+        details: parsed.details,
+      });
     }
 
     return res.json();

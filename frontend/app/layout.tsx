@@ -5,6 +5,8 @@ import { Analytics } from '@vercel/analytics/next'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import './globals.css'
+import { Toaster } from "@/components/ui/toaster"
+
 
 const _spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: '--font-heading' });
 const _dmSans = DM_Sans({ subsets: ["latin"], variable: '--font-body' });
@@ -43,6 +45,7 @@ export default function RootLayout({
         <Header />
         {children}
         <Footer />
+        <Toaster />
         <Analytics />
       </body>
     </html>
