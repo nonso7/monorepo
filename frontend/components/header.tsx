@@ -75,6 +75,9 @@ export function Header() {
             type="button"
             className="md:hidden p-2 border-3 border-foreground shadow-[3px_3px_0px_0px_rgba(26,26,26,1)] bg-background"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-expanded={isMenuOpen}
+            aria-controls="mobile-site-nav"
+            aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
           >
             {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -82,7 +85,7 @@ export function Header() {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="md:hidden py-4 border-t-3 border-foreground">
+          <div id="mobile-site-nav" className="md:hidden py-4 border-t-3 border-foreground">
             <nav className="flex flex-col gap-3">
               {navLinks.map((link) => (
                 <Link

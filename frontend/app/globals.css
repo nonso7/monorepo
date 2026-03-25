@@ -123,4 +123,14 @@
   body {
     @apply bg-background text-foreground;
   }
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  [role='button']:focus-visible,
+  [role='tab']:focus-visible,
+  [tabindex]:not([tabindex='-1']):focus-visible {
+    @apply outline-2 outline-offset-2 outline-foreground;
+  }
 }
